@@ -24,6 +24,7 @@ class MazeGen:
     direction = 0
     # is currently backtracking
     backtracking = False
+    finished = False
     
     def __init__(self, x_size: int, y_size: int, filename: str):
         self.img_raw = Image.new("RGBA", (x_size, y_size), color="black")
@@ -33,25 +34,19 @@ class MazeGen:
     
     def generate(self):
         f = open("out.txt", "w+")
-        finnished = False
         a = 0
-        
         self.img[0, 0] = red
         
-        pyplot.ion()
-        pyplot.show()
-        while not finnished:
-            pyplot.imshow(self.img_raw)
-            pyplot.pause(0.1)
+        # pyplot.ion()
+        # pyplot.show()
+        while not self.finished:
+            # pyplot.imshow(self.img_raw)
+            # pyplot.pause(0.001)
+            self.img_raw.save(f"animation/frame{a}.png")
             print(f"round {a}")
-            # self.printimg(f)
             self.step()
             a += 1
-            # self.img_raw.save(f"img{a}.png")
-            # if a == 30:
-            #     finnished = True
-            # finnished = self.backtracking
-            sleep(.1)
+            # sleep(.1)
         
         f.close()
         self.img_raw.save(self.filename)
@@ -59,10 +54,10 @@ class MazeGen:
         return self.img_raw
     
     def is_pointer_in_range(self, point):
-        if point[0] > self.x_size or point[0] < 0:
+        if point[0] > self.x_size - 1 or point[0] < 0:
             print("pointer out of range, axis=x")
             return False
-        elif point[1] > self.y_size or point[1] < 0:
+        elif point[1] > self.y_size - 1 or point[1] < 0:
             print("pointer out of range, axis=y")
             return False
         else:
@@ -91,6 +86,7 @@ class MazeGen:
             return False
     
     def is_walkable_direction(self, direction):
+        print(self.get_pixel_woffset(direction, 1), self.get_pixel_woffset(direction, 2))
         return (self.is_pointer_in_range(self.get_pixel_woffset(direction, 1))) and \
                (self.is_pointer_in_range(self.get_pixel_woffset(direction, 2))) and \
                (self.img[self.get_pixel_woffset(direction, 1)] == black) and \
@@ -121,20 +117,15 @@ class MazeGen:
                 self.pointer = self.get_pixel_woffset(self.direction, 2)
     
     def backtrack_move(self):
-        self.img[self.pointer] = white
-        direct = 4
-        for r in range(4):
-            pixel = self.get_pixel_woffset(r, 1)
-            if self.img[pixel] == red:
-                self.pointer = pixel
-                break
-        backtracking = False
-    
-    def printimg(self, file):
-        file.write(str(self.direction) + " " + str(self.pointer) + "\n")
-        for x in range(self.x_size):
-            for y in range(self.y_size):
-                dump = "O" if self.img[x, y][0] == 255 else "X"
-                file.write(dump)
-            file.write("\n")
-        file.write("------------------------------------------------\n")
+        for n in range(2):
+            self.img[self.pointer] = white
+            found = False
+            for r in range(4):
+                pixel = self.get_pixel_woffset(r, 1)
+                if self.is_pointer_in_range(pixel) and self.img[pixel] == red:
+                    self.pointer = pixel
+                    found = True
+                    break
+        self.backtracking = False
+        if not found:
+            self.finished = True
